@@ -17,12 +17,12 @@ Library Manager: ArmAr.exe V6.14
 Hex Converter:   FromElf.exe V6.14
 CPU DLL:         SARMCM3.DLL V5.31.0.0
 Dialog DLL:      DCM.DLL V1.17.3.0
-Target DLL:      UL2CM3.DLL V1.163.4.0
+Target DLL:      lmidk-agdi.dll V???
 Dialog DLL:      TCM.DLL V1.46.0.0
  
 <h2>Project:</h2>
 D:\vscode\ES_2\ES_2_project_1\eval_1\eval_1.uvprojx
-Project File Date:  10/18/2025
+Project File Date:  10/20/2025
 
 <h2>Output:</h2>
 *** Using Compiler 'V6.14', folder: 'C:\Keil_v5\ARM\ARMCLANG\Bin'
@@ -298,78 +298,96 @@ C:/Users/zhr/AppData/Local/Arm/Packs/Keil/TM4C_DFP/1.1.0/Device/Include/TM4C123/
 C:/Users/zhr/AppData/Local/Arm/Packs/Keil/TM4C_DFP/1.1.0/Device/Include/TM4C123/TM4C123GH6PM.h(1251): warning: anonymous unions are a C11 extension [-Wc11-extensions]
   union {
   ^
-main.c(35): warning: no previous extern declaration for non-static variable 'pulse_width_us' [-Wmissing-variable-declarations]
+main.c(18): warning: no previous extern declaration for non-static variable 'pulse_width_us' [-Wmissing-variable-declarations]
 volatile uint32_t pulse_width_us = 1000;
                   ^
-main.c(35): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+main.c(18): note: declare 'static' if the variable is not intended to be used outside of this translation unit
 volatile uint32_t pulse_width_us = 1000;
          ^
-main.c(36): warning: no previous extern declaration for non-static variable 'rpm' [-Wmissing-variable-declarations]
+main.c(19): warning: no previous extern declaration for non-static variable 'rpm' [-Wmissing-variable-declarations]
 volatile uint32_t rpm = 0;
                   ^
-main.c(36): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+main.c(19): note: declare 'static' if the variable is not intended to be used outside of this translation unit
 volatile uint32_t rpm = 0;
          ^
-main.c(67): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
-    GPIOA->AMSEL &= ~0x03;      // Disable analog
-                 ~~ ^~~~~
+main.c(20): warning: no previous extern declaration for non-static variable 'pulse_count' [-Wmissing-variable-declarations]
+volatile uint32_t pulse_count = 0;
+                  ^
+main.c(20): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+volatile uint32_t pulse_count = 0;
+         ^
 main.c(69): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
-    UART0->CTL &= ~0x01;        // Disable UART for config
+    GPIOA->AMSEL &= ~0x03;
+                 ~~ ^~~~~
+main.c(71): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    UART0->CTL &= ~0x01;
                ~~ ^~~~~
-main.c(93): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(94): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     GPIOE->AFSEL &= ~GPIO_PORTE_PIN1;
                  ~~ ^~~~~~~~~~~~~~~~
-main.c(96): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(97): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     GPIOE->DATA  &= ~GPIO_PORTE_PIN1;
                  ~~ ^~~~~~~~~~~~~~~~
-main.c(109): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(108): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     GPIOE->DEN &= ~0x08;
                ~~ ^~~~~
-main.c(112): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(111): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     ADC0->ACTSS &= ~0x08;
                 ~~ ^~~~~
-main.c(113): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(112): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     ADC0->EMUX &= ~0xF000;
                ~~ ^~~~~~~
-main.c(186): warning: format specifies type 'unsigned long' but the argument has type 'uint32_t' (aka 'unsigned int') [-Wformat]
+main.c(132): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    GPIOB->DIR &= ~GPIO_PORTB_PIN1;
+               ~~ ^~~~~~~~~~~~~~~~
+main.c(134): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    GPIOB->AFSEL &= ~GPIO_PORTB_PIN1;
+                 ~~ ^~~~~~~~~~~~~~~~
+main.c(136): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    GPIOB->IS  &= ~GPIO_PORTB_PIN1;   // Edge sensitive
+               ~~ ^~~~~~~~~~~~~~~~
+main.c(137): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    GPIOB->IBE &= ~GPIO_PORTB_PIN1;   // Single edge
+               ~~ ^~~~~~~~~~~~~~~~
+main.c(221): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    GPIOE->DATA &= ~GPIO_PORTE_PIN1;
+                ~~ ^~~~~~~~~~~~~~~~
+main.c(222): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+    TIMER2->CTL &= ~0x01;
+                ~~ ^~~~~
+main.c(231): warning: format specifies type 'unsigned long' but the argument has type 'uint32_t' (aka 'unsigned int') [-Wformat]
     sprintf(buffer, "RPM:%lu\n", rpm);
                          ~~~     ^~~
                          %u
-main.c(194): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
-    GPIOE->DATA &= ~GPIO_PORTE_PIN1;
-                ~~ ^~~~~~~~~~~~~~~~
-main.c(195): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
-    TIMER2->CTL &= ~0x01;
-                ~~ ^~~~~
-main.c(204): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(250): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     SYSCTL->RCC = (SYSCTL->RCC & ~0x000007C0) + 0x00000540;
                                ~ ^~~~~~~~~~~
-main.c(205): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(251): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     SYSCTL->RCC2 &= ~0x00000070;
                  ~~ ^~~~~~~~~~~
-main.c(206): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(252): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     SYSCTL->RCC2 &= ~0x00002000;
                  ~~ ^~~~~~~~~~~
-main.c(208): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(254): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     SYSCTL->RCC2 = (SYSCTL->RCC2 & ~0x1FC00000) + (24 << 22);
                                  ~ ^~~~~~~~~~~
-main.c(210): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
+main.c(256): warning: implicit conversion changes signedness: 'int' to 'unsigned int' [-Wsign-conversion]
     SYSCTL->RCC2 &= ~0x00000800;
                  ~~ ^~~~~~~~~~~
-main.c(211): warning: no newline at end of file [-Wnewline-eof]
+main.c(257): warning: no newline at end of file [-Wnewline-eof]
 }
  ^
-main.c(37): warning: no previous extern declaration for non-static variable 'j' [-Wmissing-variable-declarations]
+main.c(21): warning: no previous extern declaration for non-static variable 'j' [-Wmissing-variable-declarations]
 unsigned volatile long j;
                        ^
-main.c(37): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+main.c(21): note: declare 'static' if the variable is not intended to be used outside of this translation unit
 unsigned volatile long j;
 ^
-63 warnings generated.
+68 warnings generated.
 compiling main.c...
 linking...
-Program Size: Code=2400 RO-data=652 RW-data=4 ZI-data=648  
-".\Objects\eval_1.axf" - 0 Error(s), 107 Warning(s).
+Program Size: Code=2700 RO-data=652 RW-data=4 ZI-data=624  
+".\Objects\eval_1.axf" - 0 Error(s), 112 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -395,9 +413,9 @@ Package Vendor: Keil
    * Component: ARM::CMSIS:CORE:5.4.0
 
    * Component: Keil::Device:Startup:1.0.1
-      Source file:   Device\Source\ARM\startup_TM4C123.s
-      Source file:   Device\Source\system_TM4C123.c
       Include file:  Device\Include\TM4C123\TM4C123.h
+      Source file:   Device\Source\system_TM4C123.c
+      Source file:   Device\Source\ARM\startup_TM4C123.s
 Build Time Elapsed:  00:00:01
 </pre>
 </body>
