@@ -7,17 +7,17 @@
 #define GPIO_PORTB_CLOCK_EN  0x02
 #define GPIO_PORTE_PIN1      0x02    // Motor PWM output (PE1)
 #define GPIO_PORTE_PIN3      0x08    // Potentiometer input (PE3)
-#define GPIO_PORTB_PIN1      0x02    // Optocoupler input (PB1)
+#define GPIO_PORTB_PIN2      0x04    // CCP input (PB2 = T3CCP0)
 
 /* ---------- Timer Clock Enables ---------- */
 #define TIMER1_CLOCK_EN      (1 << 1)
 #define TIMER2_CLOCK_EN      (1 << 2)
 #define TIMER3_CLOCK_EN      (1 << 3)
+#define TIMER4_CLOCK_EN      (1 << 4)
 
 /* ---------- Globals ---------- */
 volatile uint32_t pulse_width_us = 1000;
 volatile uint32_t rpm = 0;
-volatile uint32_t pulse_count = 0;
 unsigned volatile long j;
 
 /* ---------- Function Prototypes ---------- */
@@ -25,10 +25,11 @@ void PLL_Init(void);
 void PE1_Digital_Output_Init(void);
 void PE3_ADC_Init(void);
 uint16_t ADC0_Read(void);
-void PB1_Optocoupler_Init(void);
+void PB2_as_T3CCP0_Init(void);
 void Timer1A_Init_Periodic_ms(uint32_t period_ms);
 void Timer2A_Init_OneShot_us(uint32_t delay_us);
-void Timer3A_Init_1s(void);
+void Timer3A_EdgeCount_Init(void);
+void Timer4A_Init_1s(void);
 void UART0_Init(void);
 void UART0_TxChar(char c);
 void UART0_TxString(char *str);
@@ -36,23 +37,23 @@ void UART0_TxString(char *str);
 /* ---------- ISRs ---------- */
 void TIMER1A_Handler(void);
 void TIMER2A_Handler(void);
-void TIMER3A_Handler(void);
-void GPIOB_Handler(void);
+void TIMER4A_Handler(void);
 
 /* ======================================================= */
 int main(void) {
     PLL_Init();
     PE1_Digital_Output_Init();
     PE3_ADC_Init();
-    PB1_Optocoupler_Init();
+    PB2_as_T3CCP0_Init();     // CCP input for edge counting
     UART0_Init();
 
     Timer2A_Init_OneShot_us(pulse_width_us);
-    Timer1A_Init_Periodic_ms(20U);  // 50 Hz servo control
-    Timer3A_Init_1s();              // 1-second RPM sampling
+    Timer1A_Init_Periodic_ms(20U);  // 50 Hz PWM
+    Timer3A_EdgeCount_Init();       // CCP edge counter
+    Timer4A_Init_1s();              // 1-second interval for RPM calculation
 
     while (1) {
-        // Interrupt-driven operation
+        // All actions are interrupt-driven
     }
 }
 
@@ -124,29 +125,22 @@ uint16_t ADC0_Read(void) {
 }
 
 /* ======================================================= */
-/* ---------- Optocoupler Input (PB1) ---------- */
-void PB1_Optocoupler_Init(void) {
+/* ---------- PB2 as T3CCP0 (Edge Counter Input) ---------- */
+void PB2_as_T3CCP0_Init(void) {
     SYSCTL->RCGCGPIO |= GPIO_PORTB_CLOCK_EN;
-    while ((SYSCTL->PRGPIO & GPIO_PORTB_CLOCK_EN) == 0);
+    for (j = 0; j < 3; j++);
 
-    GPIOB->DIR &= ~GPIO_PORTB_PIN1;
-    GPIOB->DEN |= GPIO_PORTB_PIN1;
-    GPIOB->AFSEL &= ~GPIO_PORTB_PIN1;
-
-    GPIOB->IS  &= ~GPIO_PORTB_PIN1;   // Edge sensitive
-    GPIOB->IBE &= ~GPIO_PORTB_PIN1;   // Single edge
-    GPIOB->IEV |= GPIO_PORTB_PIN1;    // Rising edge
-    GPIOB->ICR |= GPIO_PORTB_PIN1;    // Clear flag
-    GPIOB->IM  |= GPIO_PORTB_PIN1;    // Enable interrupt
-
-    NVIC_SetPriority(GPIOB_IRQn, 3);
-    NVIC_EnableIRQ(GPIOB_IRQn);
+    GPIOB->AFSEL |= 0x04;        // Enable alternate function on PB2
+    GPIOB->DEN   |= 0x04;        // Digital enable
+    GPIOB->DIR   &= ~0x04;       // Input
+    GPIOB->PCTL &= ~0x00000F00;  // Clear PCTL bits
+    GPIOB->PCTL |= 0x00000700;   // Configure as T3CCP0
 }
 
 /* ======================================================= */
 /* ---------- Timers ---------- */
 
-// Timer2A: One-shot pulse width
+// Timer2A: One-shot PWM
 void Timer2A_Init_OneShot_us(uint32_t delay_us) {
     SYSCTL->RCGCTIMER |= TIMER2_CLOCK_EN;
     for (j = 0; j < 3; j++);
@@ -182,22 +176,35 @@ void Timer1A_Init_Periodic_ms(uint32_t period_ms) {
     TIMER1->CTL |= 0x01;
 }
 
-// Timer3A: 1-second periodic for RPM
-void Timer3A_Init_1s(void) {
+/* ---------- Timer3A: Edge Counter (CCP) ---------- */
+void Timer3A_EdgeCount_Init(void) {
     SYSCTL->RCGCTIMER |= TIMER3_CLOCK_EN;
     for (j = 0; j < 3; j++);
 
     TIMER3->CTL = 0x00;
-    TIMER3->CFG = 0x00;            // 32-bit
-    TIMER3->TAMR = 0x02;           // Periodic
-    TIMER3->TAILR = 16000000 - 1;  // 1 second (16MHz)
+    TIMER3->CFG = 0x04;       // 16-bit mode
+    TIMER3->TAMR = 0x13;      // Capture mode, edge-count, count up
+    TIMER3->CTL |= 0x0C;      // Capture rising edge
     TIMER3->ICR = 0x01;
-    TIMER3->IMR |= 0x01;
+    TIMER3->CTL |= 0x01;      // Enable Timer3A
+}
 
-    NVIC_SetPriority(TIMER3A_IRQn, 4);
-    NVIC_EnableIRQ(TIMER3A_IRQn);
+/* ---------- Timer4A: 1-second Periodic ---------- */
+void Timer4A_Init_1s(void) {
+    SYSCTL->RCGCTIMER |= TIMER4_CLOCK_EN;
+    for (j = 0; j < 3; j++);
 
-    TIMER3->CTL |= 0x01;
+    TIMER4->CTL = 0x00;
+    TIMER4->CFG = 0x00;             // 32-bit
+    TIMER4->TAMR = 0x02;            // Periodic
+    TIMER4->TAILR = 16000000 - 1;   // 1-second interval
+    TIMER4->ICR = 0x01;
+    TIMER4->IMR |= 0x01;
+
+    NVIC_SetPriority(TIMER4A_IRQn, 4);
+    NVIC_EnableIRQ(TIMER4A_IRQn);
+
+    TIMER4->CTL |= 0x01;
 }
 
 /* ======================================================= */
@@ -206,7 +213,7 @@ void Timer3A_Init_1s(void) {
 // Servo PWM update
 void TIMER1A_Handler(void) {
     uint16_t adc_value = ADC0_Read();
-    pulse_width_us = 1000 + (adc_value * 500) / 4095;
+    pulse_width_us = 1000 + (adc_value * 1000) / 4095; // Full 1–2ms range
 
     TIMER2->TAILR = pulse_width_us - 1;
     GPIOE->DATA |= GPIO_PORTE_PIN1;
@@ -215,31 +222,22 @@ void TIMER1A_Handler(void) {
     TIMER1->ICR = 0x01;
 }
 
-// End of one-shot PWM
+// End of PWM pulse
 void TIMER2A_Handler(void) {
     TIMER2->ICR = 0x01;
     GPIOE->DATA &= ~GPIO_PORTE_PIN1;
     TIMER2->CTL &= ~0x01;
 }
 
-// 1-second RPM counter
-void TIMER3A_Handler(void) {
+// Every 1 second, compute RPM
+void TIMER4A_Handler(void) {
     char buffer[40];
-    rpm = (pulse_count * 60)/2;      // 1 pulse per revolution
-    pulse_count = 0;
-
+    uint32_t edges = TIMER3->TAR;   // Read edge count from CCP
+    rpm = edges * 60;               // 1 pulse per revolution
+    TIMER3->TAR = 0;                // Reset edge counter
     sprintf(buffer, "RPM:%lu\n", rpm);
     UART0_TxString(buffer);
-
-    TIMER3->ICR = 0x01;
-}
-
-// Optocoupler edge detect
-void GPIOB_Handler(void) {
-    if (GPIOB->MIS & GPIO_PORTB_PIN1) {
-        pulse_count++;
-        GPIOB->ICR |= GPIO_PORTB_PIN1;
-    }
+    TIMER4->ICR = 0x01;
 }
 
 /* ======================================================= */
