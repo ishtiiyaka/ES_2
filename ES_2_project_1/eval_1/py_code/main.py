@@ -15,7 +15,7 @@ fig, ax = plt.subplots(figsize=(8, 4))
 ax.set_xlabel("Time (s)")
 ax.set_ylabel("RPM")
 ax.set_title("🚀 Live Motor RPM Monitor", fontsize=13, pad=10)
-ax.set_ylim(0, 14000)  # ✅ Fixed Y-axis range
+ax.set_ylim(0, 10000)  # ✅ Fixed Y-axis range
 ax.grid(True, linestyle='--', alpha=0.6)
 ax.legend(loc='upper right', frameon=False)
 
